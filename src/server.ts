@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import path from 'path';
 import config from './config';
 import aiRoutes from './routes/ai.routes';
 
@@ -16,6 +17,9 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/ai', aiRoutes);
+
+// ── Frontend (static) ─────────────────────────────────────────────────────────
+app.use(express.static(path.join(__dirname, '../src/frontend')));
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {

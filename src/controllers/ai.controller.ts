@@ -48,6 +48,14 @@ export async function chatStream(req: Request, res: Response): Promise<void> {
 }
 
 /**
+ * GET /ai/conversations
+ * Return a list of all conversations (id, messageCount, createdAt).
+ */
+export function listConversations(_req: Request, res: Response): void {
+  res.json(conversationService.listAll());
+}
+
+/**
  * GET /ai/conversations/:id
  * Return conversation history.
  */

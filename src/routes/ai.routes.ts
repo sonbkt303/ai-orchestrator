@@ -9,6 +9,9 @@ router.post('/chat', aiController.chat);
 // POST /ai/chat/stream — send a chat message with SSE streaming
 router.post('/chat/stream', aiController.chatStream);
 
+// GET /ai/conversations — list all conversations (must be before /:id)
+router.get('/conversations', aiController.listConversations);
+
 // GET /ai/conversations/:id — get conversation history
 router.get('/conversations/:id', aiController.getConversation);
 

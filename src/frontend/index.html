@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Orchestrator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ── Sidebar ────────────────────────────────────────────── -->
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <span>Conversations</span>
+      <button id="new-chat-btn" title="Start new conversation">+ New</button>
+    </div>
+    <div id="conv-list">
+      <div class="conv-list-empty">No conversations yet</div>
+    </div>
+  </aside>
+
+  <!-- ── Main area ──────────────────────────────────────────── -->
+  <main id="main">
+
+    <!-- Top bar -->
+    <div id="top-bar">
+      <div id="chat-title">New conversation</div>
+      <div id="mode-toggle">
+        <button class="mode-btn active" data-mode="stream">Stream</button>
+        <button class="mode-btn" data-mode="normal">Normal</button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="messages"></div>
+
+    <!-- Input footer -->
+    <div id="footer">
+      <textarea
+        id="input"
+        placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
+        rows="1"
+      ></textarea>
+      <button id="send-btn">Send</button>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
