@@ -7,7 +7,7 @@ services:
     container_name: ai-orchestrator-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -33,29 +33,30 @@ services:
       - ai-orchestrator-net
 
   # ── PostgreSQL ────────────────────────────────────────────────────────────
-  # Out of scope for current PoC — uncomment when needed (Future Phase A)
-  # postgres:
-  #   image: postgres:16-alpine
-  #   container_name: ai-orchestrator-postgres
-  #   restart: unless-stopped
-  #   environment:
-  #     POSTGRES_USER: ${POSTGRES_USER:-postgres}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-  #     POSTGRES_DB: ${POSTGRES_DB:-ai_orchestrator}
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   networks:
-  #     - ai-orchestrator-net
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 3
+  # Phase A — persist conversation history
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai-orchestrator-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ai_orchestrator}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ai-orchestrator-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   redis_data:
+  postgres_data:
 
 networks:
   ai-orchestrator-net:

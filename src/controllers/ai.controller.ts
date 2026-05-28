@@ -51,8 +51,8 @@ export async function chatStream(req: Request, res: Response): Promise<void> {
  * GET /ai/conversations
  * Return a list of all conversations (id, messageCount, createdAt).
  */
-export function listConversations(_req: Request, res: Response): void {
-  res.json(conversationService.listAll());
+export async function listConversations(_req: Request, res: Response): Promise<void> {
+  res.json(await conversationService.listAll());
 }
 
 /**
@@ -61,7 +61,7 @@ export function listConversations(_req: Request, res: Response): void {
  */
 export async function getConversation(req: Request, res: Response): Promise<void> {
   const id = req.params.id as string;
-  const history = conversationService.getHistory(id);
+  const history = await conversationService.getHistory(id);
 
   if (!history) {
     res.status(404).json({ error: 'Conversation not found' });

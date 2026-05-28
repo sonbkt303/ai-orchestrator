@@ -1,39 +1,29 @@
-import { randomUUID } from 'crypto';
 import type { Message } from '../types';
+import * as conversationRepo from '../db/repositories/conversation.repository';
+import * as messageRepo from '../db/repositories/message.repository';
 
-interface ConversationEntry {
-  messages: Message[];
-  createdAt: string;
+export async function create(): Promise<string> {
+  return conversationRepo.create();
 }
 
-const store = new Map<string, ConversationEntry>();
+export async function getHistory(id: string): Promise<Message[] | null> {
+  const conversation = await conversationRepo.findById(id);
+  if (!conversation) return null;
 
-export function create(): string {
-  const id = randomUUID();
-  store.set(id, { messages: [], createdAt: new Date().toISOString() });
-  return id;
+  const rows = await messageRepo.findByConversationId(id);
+  return rows.map((r) => ({ role: r.role, content: r.content }));
 }
 
-export function getHistory(id: string): Message[] | null {
-  const entry = store.get(id);
-  return entry ? [...entry.messages] : null;
+export async function addMessage(id: string, message: Message): Promise<void> {
+  await messageRepo.insert(id, message.role, message.content);
+  await conversationRepo.touchUpdatedAt(id);
 }
 
-export function addMessage(id: string, message: Message): void {
-  if (!store.has(id)) {
-    store.set(id, { messages: [], createdAt: new Date().toISOString() });
-  }
-  store.get(id)!.messages.push(message);
+export async function listAll(): Promise<{ id: string; createdAt: string }[]> {
+  const rows = await conversationRepo.listAll();
+  return rows.map((r) => ({ id: r.id, createdAt: r.createdAt }));
 }
 
-export function listAll(): { id: string; messageCount: number; createdAt: string }[] {
-  return Array.from(store.entries()).map(([id, entry]) => ({
-    id,
-    messageCount: entry.messages.length,
-    createdAt: entry.createdAt,
-  }));
-}
-
-export function remove(id: string): void {
-  store.delete(id);
+export async function remove(id: string): Promise<void> {
+  await conversationRepo.remove(id);
 }

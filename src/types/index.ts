@@ -52,4 +52,11 @@ export interface AppConfig {
     port: number;
     password: string | undefined;
   };
+  postgres: {
+    host: string;
+    port: number;
+    user: string;
+    password: string;
+    database: string;
+  };
 }

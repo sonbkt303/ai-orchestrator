@@ -5,16 +5,16 @@ import * as gatewayService from './gateway.service';
 import type { ChatParams, ChatStreamParams, ChatResult } from '../types';
 
 export async function chat({ message, conversationId }: ChatParams): Promise<ChatResult> {
-  const convId = conversationId ?? conversationService.create();
-  const history = conversationService.getHistory(convId) ?? [];
+  const convId = conversationId ?? await conversationService.create();
+  const history = await conversationService.getHistory(convId) ?? [];
 
   const context = contextBuilderService.build({ conversationId: convId });
   const messages = promptBuilderService.build({ message, history, context });
 
   const text = await gatewayService.complete({ messages });
 
-  conversationService.addMessage(convId, { role: 'user', content: message });
-  conversationService.addMessage(convId, { role: 'assistant', content: text });
+  await conversationService.addMessage(convId, { role: 'user', content: message });
+  await conversationService.addMessage(convId, { role: 'assistant', content: text });
 
   return { text, conversationId: convId };
 }
@@ -25,8 +25,8 @@ export async function chatStream({
   onChunk,
   onDone,
 }: ChatStreamParams): Promise<void> {
-  const convId = conversationId ?? conversationService.create();
-  const history = conversationService.getHistory(convId) ?? [];
+  const convId = conversationId ?? await conversationService.create();
+  const history = await conversationService.getHistory(convId) ?? [];
 
   const context = contextBuilderService.build({ conversationId: convId });
   const messages = promptBuilderService.build({ message, history, context });
@@ -41,8 +41,8 @@ export async function chatStream({
     },
   });
 
-  conversationService.addMessage(convId, { role: 'user', content: message });
-  conversationService.addMessage(convId, { role: 'assistant', content: fullText });
+  await conversationService.addMessage(convId, { role: 'user', content: message });
+  await conversationService.addMessage(convId, { role: 'assistant', content: fullText });
 
   onDone({ conversationId: convId });
 }
