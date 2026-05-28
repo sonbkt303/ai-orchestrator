@@ -1,0 +1,78 @@
+services:
+
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  # Used for: conversation state cache (Phase 7), BullMQ queue (Future B)
+  redis:
+    image: redis:7-alpine
+    container_name: ai-orchestrator-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai-orchestrator-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: ai-orchestrator-redis-ui
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: "local:redis:6379"
+    ports:
+      - "8081:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-orchestrator-net
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────
+  # Out of scope for current PoC — uncomment when needed (Future Phase A)
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: ai-orchestrator-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER:-postgres}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+  #     POSTGRES_DB: ${POSTGRES_DB:-ai_orchestrator}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - ai-orchestrator-net
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
+
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: ai-orchestrator-pgadmin
+  #   restart: unless-stopped
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@local.dev}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - ai-orchestrator-net
+
+volumes:
+  redis_data:
+  postgres_data:    # reserved for Future Phase A
+
+networks:
+  ai-orchestrator-net:
+    driver: bridge
