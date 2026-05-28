@@ -1,7 +1,5 @@
-'use strict';
-
-const { Router } = require('express');
-const aiController = require('../controllers/ai.controller');
+import { Router } from 'express';
+import * as aiController from '../controllers/ai.controller';
 
 const router = Router();
 
@@ -14,4 +12,4 @@ router.post('/chat/stream', aiController.chatStream);
 // GET /ai/conversations/:id — get conversation history
 router.get('/conversations/:id', aiController.getConversation);
 
-module.exports = router;
+export default router;

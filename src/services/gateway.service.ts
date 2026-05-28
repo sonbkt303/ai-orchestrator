@@ -1,20 +1,13 @@
-'use strict';
-
-const config = require('../config');
+import config from '../config';
+import type { GatewayCompleteParams, GatewayStreamParams } from '../types';
 
 const DEFAULT_TIMEOUT_MS = config.ai.timeoutMs;
 
-/**
- * Send a non-streaming completion request to the AI Gateway.
- * @param {object} params
- * @param {Array<{role: string, content: string}>} params.messages
- * @returns {Promise<string>} assistant text
- */
-async function complete({ messages }) {
+export async function complete({ messages }: GatewayCompleteParams): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
-  let res;
+  let res: Response;
   try {
     res = await fetch(`${config.ai.gatewayUrl}/chat/completions`, {
       method: 'POST',
@@ -38,22 +31,15 @@ async function complete({ messages }) {
     throw new Error(`Gateway error ${res.status}: ${body}`);
   }
 
-  const data = await res.json();
+  const data = await res.json() as { choices: Array<{ message: { content: string } }> };
   return data.choices[0].message.content;
 }
 
-/**
- * Send a streaming completion request to the AI Gateway.
- * Calls onChunk for each text delta.
- * @param {object} params
- * @param {Array<{role: string, content: string}>} params.messages
- * @param {function} params.onChunk
- */
-async function stream({ messages, onChunk }) {
+export async function stream({ messages, onChunk }: GatewayStreamParams): Promise<void> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
-  let res;
+  let res: Response;
   try {
     res = await fetch(`${config.ai.gatewayUrl}/chat/completions`, {
       method: 'POST',
@@ -77,14 +63,18 @@ async function stream({ messages, onChunk }) {
     throw new Error(`Gateway error ${res.status}: ${body}`);
   }
 
+  if (!res.body) {
+    throw new Error('Gateway returned empty response body');
+  }
+
   // Parse the SSE stream from the AI provider
   const decoder = new TextDecoder();
   let buffer = '';
 
-  for await (const rawChunk of res.body) {
+  for await (const rawChunk of res.body as unknown as AsyncIterable<Uint8Array>) {
     buffer += decoder.decode(rawChunk, { stream: true });
     const lines = buffer.split('\n');
-    buffer = lines.pop(); // keep incomplete line in buffer
+    buffer = lines.pop() ?? '';
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -93,17 +83,16 @@ async function stream({ messages, onChunk }) {
       const data = trimmed.slice(5).trim();
       if (data === '[DONE]') return;
 
-      let parsed;
+      let parsed: unknown;
       try {
         parsed = JSON.parse(data);
       } catch {
         continue;
       }
 
-      const delta = parsed?.choices?.[0]?.delta?.content;
+      const delta = (parsed as { choices?: Array<{ delta?: { content?: string } }> })
+        ?.choices?.[0]?.delta?.content;
       if (delta) onChunk(delta);
     }
   }
 }
-
-module.exports = { complete, stream };

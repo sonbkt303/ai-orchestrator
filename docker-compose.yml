@@ -54,24 +54,8 @@ services:
   #     timeout: 5s
   #     retries: 3
 
-  # pgadmin:
-  #   image: dpage/pgadmin4:latest
-  #   container_name: ai-orchestrator-pgadmin
-  #   restart: unless-stopped
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@local.dev}
-  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-  #   ports:
-  #     - "5050:80"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   networks:
-  #     - ai-orchestrator-net
-
 volumes:
   redis_data:
-  postgres_data:    # reserved for Future Phase A
 
 networks:
   ai-orchestrator-net:
