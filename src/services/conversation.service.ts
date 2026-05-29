@@ -14,9 +14,10 @@ export async function getHistory(id: string): Promise<Message[] | null> {
   return rows.map((r) => ({ role: r.role, content: r.content }));
 }
 
-export async function addMessage(id: string, message: Message): Promise<void> {
-  await messageRepo.insert(id, message.role, message.content);
+export async function addMessage(id: string, message: Message): Promise<string> {
+  const row = await messageRepo.insert(id, message.role, message.content);
   await conversationRepo.touchUpdatedAt(id);
+  return row.id;
 }
 
 export async function listAll(): Promise<{ id: string; createdAt: string }[]> {

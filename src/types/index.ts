@@ -1,5 +1,7 @@
 export type MessageRole = 'system' | 'user' | 'assistant';
 
+export type AiRequestStatus = 'success' | 'timeout' | 'error';
+
 export interface Message {
   role: MessageRole;
   content: string;
