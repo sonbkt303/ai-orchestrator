@@ -66,23 +66,27 @@ export async function chatStream({
   const context = contextBuilderService.build({ conversationId: convId });
   const messages = promptBuilderService.build({ message, history, context });
 
-  console.log('[ai.service] chatStream - messages:', messages);
-
   let fullText = '';
+  let chunkCount = 0;
   let status: AiRequestStatus = 'success';
   let errorText: string | null = null;
   const t0 = Date.now();
+
+  console.log('[ai.service] stream started', {
+    conversationId: convId,
+    historyCount: history.length,
+    promptMessages: messages.length,
+  });
 
   try {
     await gatewayService.stream({
       messages,
       onChunk: (chunk) => {
+        chunkCount += 1;
         fullText += chunk;
         onChunk(chunk);
       },
     });
-
-    console.log('[ai.service] chatStream - fullText:', fullText);
   } catch (err) {
     status = err instanceof Error && err.name === 'AbortError' ? 'timeout' : 'error';
     errorText = err instanceof Error ? err.message : String(err);
@@ -112,6 +116,13 @@ export async function chatStream({
     latencyMs,
     status,
     errorText,
+  });
+
+  console.log('[ai.service] stream completed', {
+    conversationId: convId,
+    chunkCount,
+    responseChars: fullText.length,
+    latencyMs,
   });
 
   onDone({ conversationId: convId });

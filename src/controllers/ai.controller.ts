@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { randomUUID } from 'crypto';
 import * as aiService from '../services/ai.service';
 import * as streamService from '../services/stream.service';
 import * as conversationService from '../services/conversation.service';
@@ -31,19 +32,46 @@ export async function chatStream(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  streamService.initSSE(res);
+  const streamId = randomUUID();
+  const startedAt = Date.now();
+  let chunkCount = 0;
+  const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+
+  console.log('[ai.controller] stream request received', {
+    streamId,
+    conversationId: conversationId ?? null,
+    clientIp,
+  });
+
+  req.on('close', () => {
+    console.log('[ai.controller] client disconnected', {
+      streamId,
+      elapsedMs: Date.now() - startedAt,
+      chunkCount,
+    });
+  });
+
+  streamService.initSSE(res, streamId);
 
   try {
     await aiService.chatStream({
       message: message.trim(),
       conversationId,
-      onChunk: (chunk) => streamService.writeChunk(res, chunk),
-      onDone: (meta) => streamService.writeDone(res, meta),
+      onChunk: (chunk) => {
+        chunkCount += 1;
+        streamService.writeChunk(res, chunk, streamId);
+      },
+      onDone: (meta) => streamService.writeDone(res, meta, streamId),
     });
   } catch (err) {
-    streamService.writeError(res, err instanceof Error ? err.message : 'Unknown error');
+    streamService.writeError(res, err instanceof Error ? err.message : 'Unknown error', streamId);
   } finally {
-    streamService.close(res);
+    streamService.close(res, streamId);
+    console.log('[ai.controller] stream request closed', {
+      streamId,
+      elapsedMs: Date.now() - startedAt,
+      chunkCount,
+    });
   }
 }
 
