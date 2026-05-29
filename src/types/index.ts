@@ -48,6 +48,7 @@ export interface AppConfig {
     apiKey: string | undefined;
     model: string;
     timeoutMs: number;
+    responseDelayMs: number;
   };
   redis: {
     host: string;

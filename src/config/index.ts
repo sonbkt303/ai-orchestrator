@@ -10,6 +10,7 @@ const config: AppConfig = {
     apiKey: process.env.AI_API_KEY,
     model: process.env.AI_MODEL ?? 'gpt-4o',
     timeoutMs: parseInt(process.env.AI_TIMEOUT_MS ?? '30000', 10),
+    responseDelayMs: parseInt(process.env.AI_RESPONSE_DELAY_MS ?? '5000', 10),
   },
 
   redis: {

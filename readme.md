@@ -76,7 +76,7 @@ npm install
 
 # 2. Configure environment
 cp .env.example .env
-# Edit .env — set AI_GATEWAY_URL and AI_API_KEY
+# Edit .env — set AI_GATEWAY_URL and AI_API_KEY (optional: AI_RESPONSE_DELAY_MS=5000)
 
 # 3. Start infrastructure (Redis)
 npm run infra:up

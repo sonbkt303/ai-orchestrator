@@ -6,6 +6,8 @@ import * as aiRequestRepo from '../db/repositories/ai_request.repository';
 import config from '../config';
 import type { AiRequestStatus, ChatParams, ChatStreamParams, ChatResult } from '../types';
 
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function chat({ message, conversationId }: ChatParams): Promise<ChatResult> {
   const convId = conversationId ?? await conversationService.create();
   const history = await conversationService.getHistory(convId) ?? [];
@@ -51,6 +53,10 @@ export async function chat({ message, conversationId }: ChatParams): Promise<Cha
     errorText,
   });
 
+  if (config.ai.responseDelayMs > 0) {
+    await sleep(config.ai.responseDelayMs);
+  }
+
   return { text, conversationId: convId };
 }
 
@@ -79,6 +85,11 @@ export async function chatStream({
   });
 
   try {
+    if (config.ai.responseDelayMs > 0) {
+      console.log(`[ai.service] simulating response delay of ${config.ai.responseDelayMs}ms`);
+      await sleep(config.ai.responseDelayMs);
+    }
+
     await gatewayService.stream({
       messages,
       onChunk: (chunk) => {
