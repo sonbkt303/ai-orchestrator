@@ -66,6 +66,8 @@ export async function chatStream({
   const context = contextBuilderService.build({ conversationId: convId });
   const messages = promptBuilderService.build({ message, history, context });
 
+  console.log('[ai.service] chatStream - messages:', messages);
+
   let fullText = '';
   let status: AiRequestStatus = 'success';
   let errorText: string | null = null;
@@ -79,6 +81,8 @@ export async function chatStream({
         onChunk(chunk);
       },
     });
+
+    console.log('[ai.service] chatStream - fullText:', fullText);
   } catch (err) {
     status = err instanceof Error && err.name === 'AbortError' ? 'timeout' : 'error';
     errorText = err instanceof Error ? err.message : String(err);
