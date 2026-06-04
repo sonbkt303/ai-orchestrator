@@ -85,10 +85,10 @@ export async function chatStream({
   });
 
   try {
-    if (config.ai.responseDelayMs > 0) {
-      console.log(`[ai.service] simulating response delay of ${config.ai.responseDelayMs}ms`);
-      await sleep(config.ai.responseDelayMs);
-    }
+    // if (config.ai.responseDelayMs > 0) {
+    //   console.log(`[ai.service] simulating response delay of ${config.ai.responseDelayMs}ms`);
+    //   await sleep(config.ai.responseDelayMs);
+    // }
 
     await gatewayService.stream({
       messages,
@@ -98,6 +98,7 @@ export async function chatStream({
         onChunk(chunk);
       },
     });
+    
   } catch (err) {
     status = err instanceof Error && err.name === 'AbortError' ? 'timeout' : 'error';
     errorText = err instanceof Error ? err.message : String(err);
