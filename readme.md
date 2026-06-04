@@ -1,229 +1,83 @@
-# AI Orchestrator PoC
+# AI Orchestrator — Proof of Concept
 
-> Node.js · Express · SSE · Native Fetch · Node 18+
+Lightweight Node.js + Express backend demonstrating AI request lifecycle, streaming (SSE), prompt/context orchestration, and a simple AI gateway integration.
 
-A backend PoC to understand AI request lifecycle, streaming, SSE, conversation flow, and AI gateway integration — before migrating to a production architecture (NestJS, RAG, etc.).
+**Status:** PoC for learning and experimentation — not production-ready.
 
----
-
-## Goals
-
-**In scope**
-- Understand AI request lifecycle
-- Understand streaming & SSE end-to-end
-- Understand conversation / context flow
-- Understand how to integrate an AI Gateway
-- Validate backend architecture patterns
-
-**Out of scope**
-- Enterprise-grade infrastructure
-- Microservices
-- Performance optimization
-- Large-scale deployment
-
----
-
-## Architecture
-
-```
-Frontend Playground
-    │
-    │  HTTP / SSE
-    ▼
-Node.js Express Backend
-    │
-    ├── AI Orchestration Layer
-    │       ├── Prompt Builder
-    │       ├── Context Builder
-    │       ├── Conversation Manager
-    │       └── Stream Handler
-    │
-    ├── AI Gateway Client
-    │
-    ├── Redis (Phase 7 — optional)
-    │
-    └── PostgreSQL (Future Phase A — out of scope)
-    │
-    ▼
-AI / API Gateway
-    │
-    ▼
-LLM Provider
-```
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Runtime | Node.js 18+ |
-| Framework | Express.js |
-| HTTP Client | native `fetch` (Node 18+) |
-| Streaming | SSE (Server-Sent Events) |
-| Cache / State | Redis *(Phase 7)* |
-| Database | PostgreSQL *(Future)* |
-| Dev tooling | nodemon |
-| Infrastructure | Docker Compose |
-
----
+**Prerequisites (Môi trường)**
+- Node.js: 18.x or 22.x (LTS recommended)
+- pnpm: 10.23.0+ (hoặc `npm` nếu bạn thích, nhưng repo dùng `pnpm` scripts)
+- Optional: Docker & Docker Compose (để chạy Redis dev services)
+- Environment variables: create a `.env` from `.env.example` and set at least:
+    - `AI_GATEWAY_URL` — URL tới AI gateway
+    - `AI_API_KEY` — API key (nếu gateway yêu cầu)
+    - `AI_RESPONSE_DELAY_MS` — (tuỳ chọn) giả lập độ trễ đáp ứng
 
 ## Quick Start
 
 ```bash
-# 1. Clone & install
-npm install
+# 1. Install
+pnpm install
 
-# 2. Configure environment
+# 2. Copy env file and edit
 cp .env.example .env
-# Edit .env — set AI_GATEWAY_URL and AI_API_KEY (optional: AI_RESPONSE_DELAY_MS=5000)
+# chỉnh `AI_GATEWAY_URL` và `AI_API_KEY` trong .env
 
-# 3. Start infrastructure (Redis)
-npm run infra:up
+# 3. (Optional) Start infra for Redis (docker-compose)
+pnpm run infra:up
 
 # 4. Start dev server
-npm run dev
-# → http://localhost:3000
+pnpm run dev
+# Server: http://localhost:3000
 
-# 5. Open playground
+# 5. Open playground (dev UI)
 open src/playground/index.html
 ```
 
----
+## API Reference (tổng quan)
 
-## API Reference
+- `POST /ai/chat` — non-streaming chat; trả về JSON với reply và conversationId.
+- `POST /ai/chat/stream` — streaming chat via SSE. Sự kiện SSE:
+    - `event: chunk` — payload: `{ "text": "..." }`
+    - `event: done`  — payload: `{ "conversationId": "uuid" }`
+    - `event: error` — payload: `{ "error": "..." }`
+- `GET /ai/conversations/:id` — lấy lịch sử cuộc hội thoại
+- `GET /health` — health check
 
-### `POST /ai/chat`
-Non-streaming chat. Returns full response as JSON.
+## Cấu trúc thư mục (tóm tắt)
 
-```json
-// Request
-{ "message": "Hello", "conversationId": "optional-uuid" }
-
-// Response
-{ "reply": { "text": "...", "conversationId": "uuid" }, "conversationId": "uuid" }
-```
-
-### `POST /ai/chat/stream`
-Streaming chat via SSE. Connect with `EventSource` or `fetch` + `ReadableStream`.
-
-SSE event types:
-- `event: chunk` — `{ "text": "..." }`
-- `event: done`  — `{ "conversationId": "uuid" }`
-- `event: error` — `{ "error": "..." }`
-
-### `GET /ai/conversations/:id`
-Retrieve conversation history.
-
-```json
-{ "conversationId": "uuid", "messages": [{ "role": "user", "content": "..." }] }
-```
-
-### `GET /health`
-Server health check.
-
-```json
-{ "status": "ok", "timestamp": "..." }
-```
-
----
-
-## Folder Structure
-
-```
 src/
-├── server.js
-├── config/
-│     └── index.js
-├── routes/
-│     └── ai.routes.js
-├── controllers/
-│     └── ai.controller.js
-├── services/
-│     ├── ai.service.js               ← orchestration core
-│     ├── gateway.service.js          ← AI Gateway HTTP client
-│     ├── stream.service.js           ← SSE lifecycle helpers
-│     ├── prompt-builder.service.js   ← prompt composition
-│     ├── context-builder.service.js  ← context injection
-│     └── conversation.service.js     ← in-memory conversation store
-├── prompts/
-│     ├── system.txt
-│     └── templates/
-├── utils/
-└── playground/
-      └── index.html                  ← dev chat UI
-```
+- `server.ts` — entry point
+- `config/` — cấu hình môi trường
+- `routes/` — route definitions
+- `controllers/` — HTTP controllers
+- `services/` — core orchestration (ai.service, gateway, stream, prompt/context builders)
+- `db/` — migration & repositories (Postgres future)
+- `playground/` — dev UI
 
----
+## Triển khai & Luồng yêu cầu (tóm tắt)
 
-## Request Flow
+1. Client → `POST /ai/chat` or `POST /ai/chat/stream`
+2. `ai.controller` validates input and (nếu stream) sets SSE headers
+3. `ai.service` xây dựng context + prompt
+4. `gateway.service` gọi AI Gateway và trả về response (có thể stream)
+5. `stream.service` chuyển các chunk tới client (SSE)
 
-```
-POST /ai/chat / POST /ai/chat/stream
-        ↓
-  AI Controller        ← validate input, set SSE headers
-        ↓
-    AI Service         ← orchestration
-        ↓
- Context Builder       ← inject metadata
-        ↓
-  Prompt Builder       ← compose messages[]
-        ↓
- Gateway Service       ← HTTP call to AI Gateway
-        ↓
-   AI Gateway → LLM
-```
-
-### Streaming Flow
-
-```
-LLM chunks → Gateway Service (parse SSE)
-                      ↓
-             Stream Service (write SSE)
-                      ↓
-           Client (EventSource / fetch)
-```
-
----
-
-## Infrastructure
+## Infra commands
 
 ```bash
-npm run infra:up      # start Redis + Redis Commander
-npm run infra:down    # stop all containers
-npm run infra:reset   # stop + remove all volumes (resets data)
+pnpm run infra:up      # start Redis + Redis Commander
+pnpm run infra:down    # stop infra
+pnpm run infra:reset   # stop + remove volumes
 ```
 
-| Service | URL |
-|---|---|
-| Redis | `localhost:6379` |
-| Redis Commander | http://localhost:8081 |
-| PostgreSQL *(commented out)* | `localhost:5432` |
-| pgAdmin *(commented out)* | http://localhost:5050 |
+## Notes
+- Repo dùng native `fetch` (Node 18+) để gọi AI gateway.
+- Đây là PoC: không có bảo mật, kiểm soát truy cập, hoặc xử lý tải sản xuất.
 
 ---
+If you want, I can also:
+- Add example `.env.example` contents to the README
+- Translate sections to full English or Vietnamese
 
-## Implementation Phases
-
-| Phase | Description | Status |
-|---|---|---|
-| **1** | Foundation — server, folder structure, health endpoint | ✅ Done |
-| **2** | Core request flow — non-streaming chat | ✅ Done |
-| **3** | Prompt & Context layer | ✅ Done |
-| **4** | Streaming & SSE | ✅ Done |
-| **5** | Conversation management (in-memory) | ✅ Done |
-| **6** | Playground frontend | ✅ Done |
-| **7** | Redis — externalize conversation state | ⏳ Optional |
-| **Future A** | PostgreSQL — persist conversation history | 🔵 Out of scope |
-| **Future B** | BullMQ — async job queue (RAG, file processing) | 🔵 Out of scope |
-
----
-
-## SSE Headers
-
-```js
-res.setHeader('Content-Type', 'text/event-stream');
-res.setHeader('Cache-Control', 'no-cache');
-res.setHeader('Connection', 'keep-alive');
-res.setHeader('X-Accel-Buffering', 'no'); // disable nginx buffering
-```
+(File updated with prerequisites and cleaned format.)
