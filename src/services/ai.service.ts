@@ -83,7 +83,6 @@ export async function chatStream({
     historyCount: history.length,
     promptMessages: messages.length,
   });
-
   try {
     // if (config.ai.responseDelayMs > 0) {
     //   console.log(`[ai.service] simulating response delay of ${config.ai.responseDelayMs}ms`);
@@ -95,6 +94,7 @@ export async function chatStream({
       onChunk: (chunk) => {
         chunkCount += 1;
         fullText += chunk;
+        console.log("fullText: ", fullText);
         onChunk(chunk);
       },
     });

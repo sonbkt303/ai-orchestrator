@@ -5,6 +5,21 @@ const API_BASE = 'http://localhost:3000/ai';
 let activeConvId = null;
 let isStreaming = false;
 let sendMode = 'stream'; // 'stream' | 'normal'
+let isBatchRenderEnabled = true;
+
+const RENDER_BATCH_MAX_WAIT_MS = 50;
+const SIDEBAR_REFRESH_DEBOUNCE_MS = 120;
+const AUTO_SCROLL_THRESHOLD_PX = 48;
+
+let streamBatchRafId = null;
+let streamBatchTimeoutId = null;
+let pendingStreamText = '';
+let pendingTitleText = null;
+let pendingScrollToBottom = false;
+let streamBatchTargetEl = null;
+let shouldAutoScroll = true;
+
+let sidebarRefreshTimerId = null;
 
 /* ── DOM refs ───────────────────────────────────────────────────────────── */
 const messagesEl  = document.getElementById('messages');
@@ -14,6 +29,7 @@ const newChatBtn  = document.getElementById('new-chat-btn');
 const convListEl  = document.getElementById('conv-list');
 const chatTitle   = document.getElementById('chat-title');
 const modeBtns    = document.querySelectorAll('.mode-btn');
+const batchToggleBtn = document.getElementById('batch-toggle-btn');
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
 function formatDate(iso) {
@@ -36,9 +52,93 @@ function scrollBottom() {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
+function isNearBottom() {
+  const remaining = messagesEl.scrollHeight - messagesEl.clientHeight - messagesEl.scrollTop;
+  return remaining <= AUTO_SCROLL_THRESHOLD_PX;
+}
+
+function clearRenderBatchSchedulers() {
+  if (streamBatchRafId !== null) {
+    cancelAnimationFrame(streamBatchRafId);
+    streamBatchRafId = null;
+  }
+  if (streamBatchTimeoutId !== null) {
+    clearTimeout(streamBatchTimeoutId);
+    streamBatchTimeoutId = null;
+  }
+}
+
+function flushRenderBatch() {
+  clearRenderBatchSchedulers();
+
+  if (streamBatchTargetEl && pendingStreamText) {
+    streamBatchTargetEl.textContent += pendingStreamText;
+    pendingStreamText = '';
+  }
+
+  if (pendingTitleText !== null) {
+    chatTitle.textContent = pendingTitleText;
+    pendingTitleText = null;
+  }
+
+  if (pendingScrollToBottom && shouldAutoScroll) {
+    scrollBottom();
+  }
+
+  pendingScrollToBottom = false;
+}
+
+function scheduleRenderBatchFlush() {
+  if (streamBatchRafId === null) {
+    streamBatchRafId = requestAnimationFrame(flushRenderBatch);
+  }
+
+  if (streamBatchTimeoutId === null) {
+    streamBatchTimeoutId = setTimeout(flushRenderBatch, RENDER_BATCH_MAX_WAIT_MS);
+  }
+}
+
+function queueStreamText(targetEl, text) {
+  if (!text) return;
+
+  if (streamBatchTargetEl && streamBatchTargetEl !== targetEl) {
+    flushRenderBatch();
+  }
+
+  streamBatchTargetEl = targetEl;
+  pendingStreamText += text;
+  scheduleRenderBatchFlush();
+}
+
+function queueTitleUpdate(titleText) {
+  pendingTitleText = titleText;
+  scheduleRenderBatchFlush();
+}
+
+function requestAutoScroll() {
+  if (!shouldAutoScroll) return;
+  pendingScrollToBottom = true;
+  scheduleRenderBatchFlush();
+}
+
+function finalizeRenderBatch() {
+  flushRenderBatch();
+  streamBatchTargetEl = null;
+  pendingStreamText = '';
+}
+
+function updateBatchToggleUI() {
+  if (!batchToggleBtn) return;
+  batchToggleBtn.textContent = isBatchRenderEnabled ? 'Batch ON' : 'Batch OFF';
+  batchToggleBtn.classList.toggle('active', isBatchRenderEnabled);
+}
+
 function setLoading(loading) {
   isStreaming = loading;
   sendBtn.disabled = loading;
+  if (batchToggleBtn) {
+    batchToggleBtn.disabled = loading;
+  }
 }
 
 /* ── Sidebar ────────────────────────────────────────────────────────────── */
@@ -51,6 +151,17 @@ async function loadConversations() {
   } catch {
     // server may not be ready yet — fail silently
   }
+}
+
+function scheduleSidebarRefresh() {
+  if (sidebarRefreshTimerId !== null) {
+    clearTimeout(sidebarRefreshTimerId);
+  }
+
+  sidebarRefreshTimerId = setTimeout(async () => {
+    sidebarRefreshTimerId = null;
+    await loadConversations();
+  }, SIDEBAR_REFRESH_DEBOUNCE_MS);
 }
 
 function renderSidebar(list) {
@@ -106,6 +217,7 @@ function appendMessage(role, text = '') {
   el.className = `msg ${role}`;
   el.textContent = text;
   messagesEl.appendChild(el);
+  shouldAutoScroll = true;
   scrollBottom();
   return el;
 }
@@ -115,6 +227,7 @@ function appendError(text) {
   el.className = 'msg error';
   el.textContent = text;
   messagesEl.appendChild(el);
+  shouldAutoScroll = true;
   scrollBottom();
 }
 
@@ -151,16 +264,28 @@ async function sendStream(message) {
         try { parsed = JSON.parse(raw); } catch { continue; }
 
         if (parsed.text !== undefined) {
-          assistantEl.textContent += parsed.text;
-          scrollBottom();
+          if (isBatchRenderEnabled) {
+            queueStreamText(assistantEl, parsed.text);
+            requestAutoScroll();
+          } else {
+            assistantEl.textContent += parsed.text;
+            if (shouldAutoScroll) {
+              scrollBottom();
+            }
+          }
         }
 
         if (parsed.conversationId) {
           activeConvId = parsed.conversationId;
-          chatTitle.textContent = `conv: ${shortId(activeConvId)}`;
+          if (isBatchRenderEnabled) {
+            queueTitleUpdate(`conv: ${shortId(activeConvId)}`);
+          } else {
+            chatTitle.textContent = `conv: ${shortId(activeConvId)}`;
+          }
         }
 
         if (parsed.error) {
+          finalizeRenderBatch();
           assistantEl.remove();
           appendError(`Stream error: ${parsed.error}`);
           return;
@@ -168,9 +293,11 @@ async function sendStream(message) {
       }
     }
   } catch (err) {
+    finalizeRenderBatch();
     assistantEl.remove();
     appendError(`Error: ${err.message}`);
   } finally {
+    finalizeRenderBatch();
     assistantEl.classList.remove('streaming');
   }
 }
@@ -219,7 +346,7 @@ async function send() {
   }
 
   setLoading(false);
-  await loadConversations();
+  scheduleSidebarRefresh();
   inputEl.focus();
 }
 
@@ -231,6 +358,17 @@ modeBtns.forEach(btn => {
   });
 });
 
+if (batchToggleBtn) {
+  batchToggleBtn.addEventListener('click', () => {
+    if (isStreaming) return;
+    if (isBatchRenderEnabled) {
+      finalizeRenderBatch();
+    }
+    isBatchRenderEnabled = !isBatchRenderEnabled;
+    updateBatchToggleUI();
+  });
+}
+
 /* ── New conversation ───────────────────────────────────────────────────── */
 newChatBtn.addEventListener('click', () => {
   activeConvId = null;
@@ -239,6 +377,10 @@ newChatBtn.addEventListener('click', () => {
   // Refresh sidebar active state
   convListEl.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
   inputEl.focus();
+});
+
+messagesEl.addEventListener('scroll', () => {
+  shouldAutoScroll = isNearBottom();
 });
 
 /* ── Input events ───────────────────────────────────────────────────────── */
@@ -258,5 +400,6 @@ inputEl.addEventListener('input', () => {
 });
 
 /* ── Init ───────────────────────────────────────────────────────────────── */
+updateBatchToggleUI();
 loadConversations();
 inputEl.focus();
