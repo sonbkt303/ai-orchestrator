@@ -16,4 +16,6 @@ Thumbs.db
 # Editor
 .vscode/
 *.swp
-requirements-analysis/sources/
+
+# Requirements analysis (local/confidential)
+requirements-analysis/
