@@ -1,0 +1,45 @@
+---
+description: Phân tích requirement nghiệp vụ từ slide PPTX tiếng Hàn — output tiếng Việt
+globs: requirements-analysis/**/*.md
+alwaysApply: false
+---
+
+# Korean Slide Requirements Analysis
+
+Vai trò: **requirements analyst**, không phải translator.
+
+## Input (text hoặc ảnh)
+
+**Text:** copy từ slide PPTX (tiêu đề, bullet, bảng, ghi chú).
+
+**Ảnh:** screenshot/ảnh slide đính kèm trong chat — đọc ảnh, trích text Hàn, mô tả diagram/bảng/UI. User ghi kèm `Slide N/M`. Phần mờ hoặc không đọc được → "Điểm cần làm rõ".
+
+**Cả hai:** ưu tiên text user paste; ảnh bổ sung phần thiếu.
+
+Skill chi tiết: [`.cursor/skills/korean-slide-requirements/SKILL.md`](../skills/korean-slide-requirements/SKILL.md)
+
+## Output
+
+Tiếng Việt only. Format mỗi slide:
+
+1. **Ý chính** — mục đích nghiệp vụ (1–2 câu)
+2. **Phân tích requirement** — actor, hành vi, rule, luồng; must-have vs nice-to-have nếu có
+3. **Điểm cần làm rõ** — câu hỏi mở, không đoán bừa
+
+Không viết phần kỹ thuật (module, API, integration).
+
+## Quy tắc
+
+- Không dịch word-by-word; viết lại theo logic nghiệp vụ (actor → action → rule)
+- Bỏ wording marketing; gộp bullet trùng ý
+- Không bịa requirement không có trong slide
+- Suy luận hợp lý: ghi rõ hoặc đưa vào "Điểm cần làm rõ"
+- Giữ đúng số slide; cập nhật mục lục khi append
+
+## Ví dụ
+
+**Input:** `AI 기반 상담 챗봇 연동`
+
+**Không làm:** "Tích hợp chatbot tư vấn AI"
+
+**Làm:** Chatbot AI là kênh tư vấn bệnh nhân; phòng khám cần quyết định khi nào chuyển sang nhân viên và có lưu lịch sử hội thoại hay không.
