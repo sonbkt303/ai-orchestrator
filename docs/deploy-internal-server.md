@@ -1,12 +1,12 @@
 # Deploy AI Orchestrator — Internal Server (PoC)
 
-Runbook đơn giản cho server nội bộ: **Docker Compose** chạy PostgreSQL + Redis, **Node.js app chạy thủ công** trên host.
+Runbook đơn giản cho server nội bộ: **Docker Compose** chạy PostgreSQL + Redis, **Node.js app chạy bằng PM2** trên host.
 
 | Thành phần | Cách chạy | Port |
 |---|---|---|
 | PostgreSQL | Docker Compose | 5433 (LAN) |
 | Redis | Docker Compose | 6380 (localhost only) |
-| Node.js API | Manual (`pnpm start`) | 4000 (LAN) |
+| Node.js API | PM2 (`pnpm run start:pm2`) | 4000 (LAN) |
 
 ```mermaid
 flowchart LR
@@ -49,6 +49,9 @@ nvm use 22
 # pnpm
 corepack enable
 corepack prepare pnpm@10.23.0 --activate
+
+# PM2 (process manager)
+npm install -g pm2
 ```
 
 Kiểm tra:
@@ -57,6 +60,7 @@ Kiểm tra:
 docker compose version
 node -v
 pnpm -v
+pm2 -v
 ```
 
 ---
@@ -133,21 +137,40 @@ pnpm run infra:up
 
 ---
 
-## 5. Build và chạy app (manual)
+## 5. Build và chạy app (PM2)
 
 ```bash
 pnpm install --frozen-lockfile
 pnpm run build
-pnpm start
+pnpm run start:pm2
 ```
 
-App lắng nghe tại **http://0.0.0.0:4000**. Dừng app: `Ctrl+C`.
+App lắng nghe tại **http://0.0.0.0:4000**. PM2 tự restart khi crash.
 
-Chạy nền tạm thời (tuỳ chọn):
+Kiểm tra trạng thái:
 
 ```bash
-nohup pnpm start > app.log 2>&1 &
-tail -f app.log
+pm2 status
+pm2 logs ai-orchestrator
+curl http://127.0.0.1:4000/health
+```
+
+### PM2 — lệnh thường dùng
+
+| Hành động | Lệnh |
+|---|---|
+| Start | `pnpm run start:pm2` hoặc `pm2 start ecosystem.config.cjs` |
+| Stop | `pnpm run stop:pm2` hoặc `pm2 stop ai-orchestrator` |
+| Restart | `pnpm run restart:pm2` hoặc `pm2 restart ai-orchestrator` |
+| Logs | `pnpm run logs:pm2` hoặc `pm2 logs ai-orchestrator` |
+| Xóa khỏi PM2 | `pm2 delete ai-orchestrator` |
+
+### Tự chạy lại sau reboot server (tuỳ chọn)
+
+```bash
+pm2 startup
+# Chạy lệnh sudo mà PM2 in ra (copy/paste)
+pm2 save
 ```
 
 ---
@@ -174,8 +197,8 @@ cd ai-orchestrator
 git pull --ff-only
 pnpm install --frozen-lockfile
 pnpm run build
-# Dừng app cũ (Ctrl+C hoặc kill process) rồi chạy lại:
-pnpm start
+pnpm run restart:pm2
+curl http://127.0.0.1:4000/health
 ```
 
 ---
@@ -194,14 +217,16 @@ pnpm run infra:down          # hoặc dùng script
 pnpm run infra:reset         # dừng + xóa volumes
 ```
 
-### App
+### App (PM2)
 
 | Hành động | Lệnh |
 |---|---|
-| Chạy | `pnpm start` |
-| Dev (hot reload) | `pnpm run dev` |
+| Start | `pnpm run start:pm2` |
+| Restart | `pnpm run restart:pm2` |
+| Stop | `pnpm run stop:pm2` |
+| Logs | `pnpm run logs:pm2` |
+| Dev local (hot reload) | `pnpm run dev` |
 | Build | `pnpm run build` |
-| Dừng | `Ctrl+C` |
 
 ---
 
@@ -210,6 +235,8 @@ pnpm run infra:reset         # dừng + xóa volumes
 | Triệu chứng | Cách xử lý |
 |---|---|
 | `pnpm: command not found` | `source ~/.bashrc`, kiểm tra `nvm use 22` |
+| `pm2: command not found` | `npm install -g pm2` (cùng Node version với nvm) |
+| PM2 start fail | Chưa build | `pnpm run build` rồi `pnpm run start:pm2` |
 | `permission denied` khi docker | Logout/login sau `usermod -aG docker` |
 | App không kết nối DB | Kiểm tra `docker compose ps`, `.env` POSTGRES_* |
 | Redis error | `.env`: `REDIS_HOST=localhost`, `REDIS_PORT=6380` |

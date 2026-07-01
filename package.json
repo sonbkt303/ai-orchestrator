@@ -6,6 +6,10 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
+    "start:pm2": "pm2 start ecosystem.config.cjs",
+    "stop:pm2": "pm2 stop ai-orchestrator",
+    "restart:pm2": "pm2 restart ai-orchestrator",
+    "logs:pm2": "pm2 logs ai-orchestrator",
     "dev": "tsx watch src/server.ts",
     "db:migrate": "tsx src/db/migrate.ts",
     "infra:up": "docker compose up -d",
