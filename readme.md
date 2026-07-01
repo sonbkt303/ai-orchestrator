@@ -66,10 +66,17 @@ src/
 ## Infra commands
 
 ```bash
-pnpm run infra:up      # start Redis + Redis Commander
+pnpm run infra:up      # start PostgreSQL + Redis
 pnpm run infra:down    # stop infra
 pnpm run infra:reset   # stop + remove volumes
+pnpm run infra:up -- --profile dev   # include Redis Commander UI (dev only)
 ```
+
+## Deploy internal server (Ubuntu 20.04)
+
+Triển khai hybrid: PostgreSQL + Redis qua Docker Compose, Node.js app chạy trên host (port **4000**), expose API và PostgreSQL ra LAN nội bộ.
+
+Xem runbook đầy đủ: [docs/deploy-internal-server.md](docs/deploy-internal-server.md)
 
 ## Notes
 - Repo dùng native `fetch` (Node 18+) để gọi AI gateway.

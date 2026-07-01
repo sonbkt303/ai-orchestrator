@@ -1,0 +1,20 @@
+[Unit]
+Description=AI Orchestrator API
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/ai-orchestrator
+EnvironmentFile=/opt/ai-orchestrator/.env
+ExecStart=/usr/bin/node dist/server.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ai-orchestrator
+
+[Install]
+WantedBy=multi-user.target

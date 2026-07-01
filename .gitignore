@@ -19,3 +19,4 @@ Thumbs.db
 
 # Requirements analysis (local/confidential)
 requirements-analysis/
+dist/

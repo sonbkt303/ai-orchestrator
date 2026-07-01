@@ -7,7 +7,7 @@ services:
     container_name: ai-orchestrator-redis
     restart: unless-stopped
     ports:
-      - "6380:6379"
+      - "127.0.0.1:6380:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -19,6 +19,7 @@ services:
       retries: 3
 
   redis-commander:
+    profiles: ["dev"]
     image: rediscommander/redis-commander:latest
     container_name: ai-orchestrator-redis-ui
     restart: unless-stopped
