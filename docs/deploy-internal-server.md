@@ -125,13 +125,12 @@ docker compose exec redis redis-cli ping
 
 > **Dev only:** Redis Commander UI: `docker compose --profile dev up -d redis-commander` → http://localhost:8081
 
-### 1.5 Build app và chạy migration
+### 1.5 Build app
 
 ```bash
 cd /opt/ai-orchestrator
 sudo -u deploy pnpm install --frozen-lockfile
 sudo -u deploy pnpm run build
-sudo -u deploy pnpm run db:migrate:prod
 ```
 
 ### 1.6 Cài systemd service
@@ -195,7 +194,6 @@ cd /opt/ai-orchestrator
 git pull --ff-only
 pnpm install --frozen-lockfile
 pnpm run build
-pnpm run db:migrate:prod
 sudo systemctl restart ai-orchestrator
 curl http://127.0.0.1:4000/health
 ```
@@ -253,7 +251,6 @@ sudo crontab -u deploy -e
 |---|---|---|
 | `curl :4000` connection refused | Service chưa chạy hoặc sai PORT | `systemctl status ai-orchestrator`, kiểm tra `.env` PORT=4000 |
 | App crash loop | DB chưa sẵn sàng / sai password | `docker compose ps`, test `pg_isready`, xem journalctl |
-| Migration fail | Chưa build hoặc thiếu SQL trong dist | `pnpm run build` (postbuild copy migrations), chạy lại `db:migrate:prod` |
 | LAN không vào được :4000 | UFW chặn | `sudo ufw status`, mở port 4000 cho subnet LAN |
 | LAN không vào được :5433 | UFW hoặc firewall ngoài | Mở port 5433 cho subnet LAN |
 | Redis connection error từ app | Sai host/port | `.env`: REDIS_HOST=localhost, REDIS_PORT=6380 |
@@ -280,7 +277,6 @@ git log --oneline -5
 git checkout <previous-commit-sha>
 pnpm install --frozen-lockfile
 pnpm run build
-pnpm run db:migrate:prod   # chỉ apply migration mới nếu có
 sudo systemctl restart ai-orchestrator
 ```
 

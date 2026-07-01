@@ -15,9 +15,6 @@ pnpm install --frozen-lockfile
 echo "[deploy] building..."
 pnpm run build
 
-echo "[deploy] running migrations..."
-pnpm run db:migrate:prod
-
 echo "[deploy] restarting service..."
 sudo systemctl restart "$SERVICE_NAME"
 
