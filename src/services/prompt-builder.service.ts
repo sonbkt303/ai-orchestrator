@@ -1,30 +1,18 @@
-import fs from 'fs';
-import path from 'path';
 import type { Message, Context } from '../types';
 
-const SYSTEM_PROMPT_PATH = path.join(__dirname, '../prompts/system.txt');
-
-let _systemPrompt: string | null = null;
-
-function getSystemPrompt(): string {
-  if (!_systemPrompt) {
-    _systemPrompt = fs.readFileSync(SYSTEM_PROMPT_PATH, 'utf8').trim();
-  }
-  return _systemPrompt;
-}
+const DEFAULT_SYSTEM_PROMPT =
+  'You are a helpful AI assistant.\nAnswer clearly and concisely.\nIf you are unsure about something, say so.';
 
 function buildSystemContent(context: Context | Record<string, unknown>): string {
-  const base = getSystemPrompt();
-
   if (!context || Object.keys(context).length === 0) {
-    return base;
+    return DEFAULT_SYSTEM_PROMPT;
   }
 
   const contextBlock = Object.entries(context)
     .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
     .join('\n');
 
-  return `${base}\n\n## Context\n${contextBlock}`;
+  return `${DEFAULT_SYSTEM_PROMPT}\n\n## Context\n${contextBlock}`;
 }
 
 export function build({
