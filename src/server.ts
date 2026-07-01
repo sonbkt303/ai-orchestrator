@@ -18,8 +18,14 @@ app.get('/health', (_req: Request, res: Response) => {
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/ai', aiRoutes);
 
-// ── Frontend (static) ─────────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '../src/frontend')));
+// ── Frontend (static) — only at /chat ───────────────────────────────────────
+const frontendDir = path.join(__dirname, '../src/frontend');
+
+app.use('/chat', express.static(frontendDir, { index: false, redirect: false }));
+
+app.get(['/chat', '/chat/'], (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendDir, 'index.html'));
+});
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {
