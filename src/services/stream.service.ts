@@ -1,7 +1,7 @@
 import type { Response } from 'express';
 
 function log(connectionId: string, event: string, meta: Record<string, unknown> = {}): void {
-  console.log(`[sse][${connectionId}] ${event}`, meta);
+  // console.log(`[sse][${connectionId}] ${event}`, meta);
 }
 
 export function initSSE(res: Response, connectionId = 'unknown'): void {

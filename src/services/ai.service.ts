@@ -94,7 +94,6 @@ export async function chatStream({
       onChunk: (chunk) => {
         chunkCount += 1;
         fullText += chunk;
-        console.log("fullText: ", fullText);
         onChunk(chunk);
       },
     });

@@ -39,6 +39,10 @@ export async function stream({ messages, onChunk }: GatewayStreamParams): Promis
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
+  // console.log('[gateway.service] stream started', {
+  //   messagesCount: messages.length,
+  //   messages: messages,
+  // });
   let res: Response;
   try {
     res = await fetch(`${config.ai.gatewayUrl}/chat/completions`, {
