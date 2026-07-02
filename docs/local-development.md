@@ -94,7 +94,8 @@ cp apps/public-site/.env.example apps/public-site/.env
 
 | Biến | Mặc định | Ghi chú |
 |------|----------|---------|
-| `HOMEPAGE_API_URL` | `http://localhost:3002` | Lấy snapshot đã publish |
+| `HOMEPAGE_API_URL` | `http://localhost:3002` | Lấy snapshot đã publish (server) |
+| `NEXT_PUBLIC_HOMEPAGE_API_URL` | `http://localhost:3002` | Admin UI client fetch (`/admin`) |
 | `PUBLIC_BASE_DOMAIN` | `local.cleverdent.ai` | Subdomain rewrite trong middleware |
 | `REVALIDATE_SECRET` | `dev-secret` | Phải khớp với homepage-platform |
 
@@ -204,6 +205,7 @@ curl http://localhost:3002/health
 Mở trình duyệt:
 
 - http://localhost:3000 — Landing
+- http://localhost:3000/admin — **Admin CMS** (generate, edit, preview, publish)
 - http://localhost:3000/smile-dental — Trang clinic demo (7 sections)
 
 Nếu homepage-platform chưa chạy, public-site vẫn hiển thị được nhờ **fixture fallback** (`fixtures/mock-snapshot.json`) cho slug `smile-dental`.
@@ -242,7 +244,36 @@ Luồng đầy đủ: AI sinh nội dung → lưu draft → publish snapshot →
 
 **Yêu cầu:** `ai-orchestrator`, `homepage-platform`, `public-site` đang chạy; `AI_API_KEY` hợp lệ trong `apps/ai-orchestrator/.env`.
 
-### 1. Generate draft
+### Admin UI (khuyến nghị)
+
+1. Mở http://localhost:3000/admin
+2. Chọn clinic từ dropdown (badge: No draft / Draft / Published)
+3. Clinic chưa có draft → form load dữ liệu CD mock → **Generate** → preview cập nhật bên phải
+4. Sửa hero, services, doctors, slug → preview cập nhật ngay (không cần Save)
+5. **Save draft** → reload trang → draft persist
+6. **Publish** (chỉ khi không còn unsaved changes) → link public `http://localhost:3000/{slug}`
+
+Clinic đã published → **Generate** hiện confirm (giữ slug, ghi đè nội dung AI).
+
+Slug conflict (409) → chọn slug gợi ý → Save → Publish lại.
+
+### Manual E2E checklist
+
+Prerequisites: `pnpm infra:up`, `pnpm db:migrate:hp`, `pnpm dev:all`, `AI_API_KEY`.
+
+| # | Bước | Kỳ vọng |
+|---|------|---------|
+| 1 | Mở `/admin` | ≥2 clinic, badge status đúng |
+| 2 | Clinic chưa draft → Generate | Preview cập nhật hero/sections |
+| 3 | Sửa hero | Preview instant, không cần Save |
+| 4 | Save → reload | Draft persist |
+| 5 | Publish | `GET /v1/public/sites/{slug}` OK; `localhost:3000/{slug}` render |
+| 6 | Clinic B publish slug của A | 409 + suggestions |
+| 7 | Clinic published → Regenerate | Confirm; slug giữ nguyên |
+| 8 | Đổi slug → Save → Publish | Public site slug mới OK |
+| 9 | Đổi `contentStyle` | Preview `data-style` đổi ngay |
+
+### curl — Generate draft
 
 Từ thư mục gốc repo:
 
@@ -295,6 +326,9 @@ curl http://smile-dental.local.cleverdent.ai:3000
 
 | Method | Path | Mô tả |
 |--------|------|-------|
+| GET | `/v1/admin/clinics` | Danh sách clinic (CD mock) |
+| GET | `/v1/admin/clinics/:clinicId` | Nguồn CD cho generate |
+| GET | `/v1/admin/homepage` | List tất cả drafts |
 | GET | `/v1/admin/homepage/:clinicId/draft` | Lấy draft |
 | PATCH | `/v1/admin/homepage/:clinicId/draft` | Sửa draft trước publish |
 | GET | `/v1/admin/slugs/suggest?name=Smile+Dental&city=Seoul` | Gợi ý slug |
@@ -350,7 +384,9 @@ Middleware sẽ rewrite thành `/smile-dental` nội bộ.
 ## Sơ đồ luồng dev
 
 ```
-Admin/curl
+Admin UI / curl
+   │
+   ├─► GET /v1/admin/clinics + /homepage ──► homepage-platform :3002
    │
    ├─► POST /v1/admin/homepage/generate ──► homepage-platform :3002
    │       └─► POST /ai/homepage/generate ──► ai-orchestrator :4000
@@ -360,6 +396,8 @@ Admin/curl
    │       └─► POST /api/revalidate ──► public-site :3000
    │
 Browser
+   │
+   ├─► public-site :3000/admin (CMS + in-process preview)
    │
    ├─► public-site :3000  (path hoặc subdomain)
    │       └─► GET /v1/public/sites/:slug ──► homepage-platform :3002

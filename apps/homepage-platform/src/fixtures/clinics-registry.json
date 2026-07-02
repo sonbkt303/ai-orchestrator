@@ -1,0 +1,149 @@
+[
+  {
+    "clinicProfile": {
+      "clinicId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Smile Dental Clinic",
+      "phone": "+82-2-1234-5678",
+      "address": {
+        "line1": "123 Gangnam-daero",
+        "city": "Seoul",
+        "district": "Gangnam",
+        "country": "KR",
+        "postalCode": "06000",
+        "latitude": 37.4979,
+        "longitude": 127.0276
+      },
+      "operatingHours": [
+        { "dayOfWeek": "MON", "open": "09:00", "close": "19:00", "closed": false },
+        { "dayOfWeek": "SAT", "open": null, "close": null, "closed": true }
+      ],
+      "locale": "ko-KR",
+      "timezone": "Asia/Seoul"
+    },
+    "services": [
+      {
+        "serviceId": "11111111-1111-1111-1111-111111111111",
+        "name": "Dental Cleaning",
+        "shortDescription": "Professional cleaning for a brighter, healthier smile.",
+        "iconKey": "cleaning"
+      },
+      {
+        "serviceId": "22222222-2222-2222-2222-222222222222",
+        "name": "Teeth Whitening",
+        "shortDescription": "Safe and effective whitening treatments.",
+        "iconKey": "whitening"
+      }
+    ],
+    "doctors": [
+      {
+        "doctorId": "33333333-3333-3333-3333-333333333333",
+        "name": "Dr. Kim Minsoo",
+        "specialty": "Implantology",
+        "bio": "15 years of experience in implant and restorative dentistry.",
+        "photoUrl": null
+      }
+    ],
+    "contentStyle": "warm",
+    "templateId": "template-1",
+    "siteEnabled": true,
+    "bookingEnabled": true
+  },
+  {
+    "clinicProfile": {
+      "clinicId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Bright Orthodontics",
+      "phone": "+82-2-9876-5432",
+      "address": {
+        "line1": "45 Teheran-ro",
+        "city": "Seoul",
+        "district": "Gangnam",
+        "country": "KR",
+        "postalCode": "06134",
+        "latitude": 37.5045,
+        "longitude": 127.0489
+      },
+      "operatingHours": [
+        { "dayOfWeek": "MON", "open": "10:00", "close": "18:00", "closed": false },
+        { "dayOfWeek": "SUN", "open": null, "close": null, "closed": true }
+      ],
+      "locale": "ko-KR",
+      "timezone": "Asia/Seoul"
+    },
+    "services": [
+      {
+        "serviceId": "44444444-4444-4444-4444-444444444444",
+        "name": "Braces",
+        "shortDescription": "Metal and ceramic braces for all ages.",
+        "iconKey": "braces"
+      },
+      {
+        "serviceId": "55555555-5555-5555-5555-555555555555",
+        "name": "Invisalign",
+        "shortDescription": "Clear aligner treatment for a straighter smile.",
+        "iconKey": "invisalign"
+      }
+    ],
+    "doctors": [
+      {
+        "doctorId": "66666666-6666-6666-6666-666666666666",
+        "name": "Dr. Park Jieun",
+        "specialty": "Orthodontics",
+        "bio": "Board-certified orthodontist specializing in aligners and braces.",
+        "photoUrl": null
+      }
+    ],
+    "contentStyle": "professional",
+    "templateId": "template-1",
+    "siteEnabled": true,
+    "bookingEnabled": true
+  },
+  {
+    "clinicProfile": {
+      "clinicId": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "name": "Family Dental Care",
+      "phone": "+82-31-555-1234",
+      "address": {
+        "line1": "88 Jungang-daero",
+        "city": "Suwon",
+        "district": "Paldal",
+        "country": "KR",
+        "postalCode": "16489",
+        "latitude": 37.2636,
+        "longitude": 127.0286
+      },
+      "operatingHours": [
+        { "dayOfWeek": "MON", "open": "09:00", "close": "20:00", "closed": false },
+        { "dayOfWeek": "SAT", "open": "09:00", "close": "14:00", "closed": false }
+      ],
+      "locale": "ko-KR",
+      "timezone": "Asia/Seoul"
+    },
+    "services": [
+      {
+        "serviceId": "77777777-7777-7777-7777-777777777777",
+        "name": "Pediatric Dentistry",
+        "shortDescription": "Gentle dental care for children.",
+        "iconKey": "pediatric"
+      },
+      {
+        "serviceId": "88888888-8888-8888-8888-888888888888",
+        "name": "Root Canal",
+        "shortDescription": "Pain-free root canal treatments.",
+        "iconKey": "root-canal"
+      }
+    ],
+    "doctors": [
+      {
+        "doctorId": "99999999-9999-9999-9999-999999999999",
+        "name": "Dr. Lee Hyunwoo",
+        "specialty": "General Dentistry",
+        "bio": "Family dentist with 10 years of experience in preventive care.",
+        "photoUrl": null
+      }
+    ],
+    "contentStyle": "modern",
+    "templateId": "template-1",
+    "siteEnabled": true,
+    "bookingEnabled": false
+  }
+]

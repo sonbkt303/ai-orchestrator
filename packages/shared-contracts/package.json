@@ -12,12 +12,14 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test": "pnpm build && node --experimental-strip-types --test src/draft-to-snapshot.test.ts"
   },
   "dependencies": {
     "zod": "^3.25.67"
   },
   "devDependencies": {
+    "@types/node": "^22.15.21",
     "typescript": "^5.8.3"
   }
 }

@@ -59,3 +59,13 @@ export async function updateDraft(clinicId: string, draft: HomepageDraft): Promi
     throw new Error(`Draft not found for clinic ${clinicId}`);
   }
 }
+
+export async function listAllDrafts(): Promise<HomepageDraft[]> {
+  const rows = await sql<DraftRow[]>`
+    SELECT clinic_id, slug, draft
+    FROM homepage_drafts
+    ORDER BY updated_at DESC
+  `;
+
+  return rows.map((row) => HomepageDraftSchema.parse(row.draft));
+}

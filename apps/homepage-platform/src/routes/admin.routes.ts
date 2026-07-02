@@ -2,9 +2,38 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import * as homepageService from '../modules/homepage/homepage.service';
 import * as publishService from '../modules/publish/publish.service';
+import * as clinicService from '../modules/clinic/clinic.service';
 import { AppError } from '../utils/app-error';
 
 const router = Router();
+
+router.get('/clinics', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const clinics = await clinicService.listClinics();
+    res.json({ clinics });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/clinics/:clinicId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const clinicId = req.params.clinicId as string;
+    const clinic = await clinicService.getClinic(clinicId);
+    res.json(clinic);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/homepage', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const drafts = await clinicService.listAllDrafts();
+    res.json({ drafts });
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.post('/homepage/generate', async (req: Request, res: Response, next: NextFunction) => {
   try {
