@@ -84,7 +84,10 @@ cp apps/public-site/.env.example apps/public-site/.env
 | `PORT` | `3002` | API CMS |
 | `POSTGRES_*` | localhost:5434 | DB riêng cho homepage |
 | `AI_ORCHESTRATOR_URL` | `http://localhost:4000` | Gọi sang AI orchestrator |
-| `PUBLIC_SITE_URL` | `http://localhost:3000` | URL public site |
+| `PUBLIC_SITE_URL` | `http://localhost:3000` | URL public site (revalidate) |
+| `PUBLIC_BASE_DOMAIN` | `local.cleverdent.ai` | Domain subdomain sau publish |
+| `PUBLIC_SITE_PROTOCOL` | `http` | Protocol cho `publishedUrl` |
+| `PUBLIC_SITE_PORT` | `3000` | Port append khi dev |
 | `REVALIDATE_SECRET` | `dev-secret` | Secret gọi revalidate cache |
 
 ### public-site (`apps/public-site/.env`)
@@ -92,6 +95,7 @@ cp apps/public-site/.env.example apps/public-site/.env
 | Biến | Mặc định | Ghi chú |
 |------|----------|---------|
 | `HOMEPAGE_API_URL` | `http://localhost:3002` | Lấy snapshot đã publish |
+| `PUBLIC_BASE_DOMAIN` | `local.cleverdent.ai` | Subdomain rewrite trong middleware |
 | `REVALIDATE_SECRET` | `dev-secret` | Phải khớp với homepage-platform |
 
 > **Lưu ý:** Không commit file `.env`. Các file này đã nằm trong `.gitignore`.
@@ -232,6 +236,79 @@ curl -X POST http://localhost:3000/api/revalidate \
 
 ---
 
+## Auto-gen homepage → Publish → Subdomain (E2E)
+
+Luồng đầy đủ: AI sinh nội dung → lưu draft → publish snapshot → site live qua subdomain.
+
+**Yêu cầu:** `ai-orchestrator`, `homepage-platform`, `public-site` đang chạy; `AI_API_KEY` hợp lệ trong `apps/ai-orchestrator/.env`.
+
+### 1. Generate draft
+
+Từ thư mục gốc repo:
+
+```bash
+curl -X POST http://localhost:3002/v1/admin/homepage/generate \
+  -H "Content-Type: application/json" \
+  -d @apps/homepage-platform/src/fixtures/clinic-input.json
+```
+
+Response gồm `draft` (status `draft`) và có thể có `suggestedSlugs` nếu slug bị conflict.
+
+### 2. Publish
+
+```bash
+curl -X POST http://localhost:3002/v1/admin/homepage/publish \
+  -H "Content-Type: application/json" \
+  -d '{"slug":"smile-dental"}'
+```
+
+Response ví dụ:
+
+```json
+{
+  "publishedUrl": "http://smile-dental.local.cleverdent.ai:3000",
+  "publishedAt": "2026-07-01T12:00:00.000Z"
+}
+```
+
+### 3. Verify public API
+
+```bash
+curl http://localhost:3002/v1/public/sites/smile-dental
+```
+
+### 4. Verify public site
+
+Path-based:
+
+```bash
+curl http://localhost:3000/smile-dental
+```
+
+Subdomain (cần thêm hosts — xem mục Subdomain dev):
+
+```bash
+curl http://smile-dental.local.cleverdent.ai:3000
+```
+
+### Admin API khác
+
+| Method | Path | Mô tả |
+|--------|------|-------|
+| GET | `/v1/admin/homepage/:clinicId/draft` | Lấy draft |
+| PATCH | `/v1/admin/homepage/:clinicId/draft` | Sửa draft trước publish |
+| GET | `/v1/admin/slugs/suggest?name=Smile+Dental&city=Seoul` | Gợi ý slug |
+
+AI endpoint trực tiếp (debug):
+
+```bash
+curl -X POST http://localhost:4000/ai/homepage/generate \
+  -H "Content-Type: application/json" \
+  -d @apps/homepage-platform/src/fixtures/clinic-input.json
+```
+
+---
+
 ## Subdomain dev (tùy chọn)
 
 Public site hỗ trợ rewrite subdomain → path slug qua `middleware.ts`.
@@ -270,13 +347,21 @@ Middleware sẽ rewrite thành `/smile-dental` nội bộ.
 
 ---
 
-## Sơ đồ luồng dev (Phase 0)
+## Sơ đồ luồng dev
 
 ```
+Admin/curl
+   │
+   ├─► POST /v1/admin/homepage/generate ──► homepage-platform :3002
+   │       └─► POST /ai/homepage/generate ──► ai-orchestrator :4000
+   │
+   ├─► POST /v1/admin/homepage/publish ──► homepage-platform :3002
+   │       ├─► postgres-hp (published_snapshots)
+   │       └─► POST /api/revalidate ──► public-site :3000
+   │
 Browser
    │
-   ├─► public-site :3000
-   │       │
+   ├─► public-site :3000  (path hoặc subdomain)
    │       └─► GET /v1/public/sites/:slug ──► homepage-platform :3002
    │
    └─► ai-orchestrator :4000/ai/*  (chat, streaming)

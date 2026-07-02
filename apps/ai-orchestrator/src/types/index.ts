@@ -35,6 +35,7 @@ export interface ChatStreamParams extends ChatParams {
 
 export interface GatewayCompleteParams {
   messages: Message[];
+  jsonMode?: boolean;
 }
 
 export interface GatewayStreamParams {

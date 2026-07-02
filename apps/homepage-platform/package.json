@@ -12,10 +12,12 @@
   },
   "dependencies": {
     "@clever-dent/shared-contracts": "workspace:*",
+    "@clever-dent/shared-utils": "workspace:*",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "postgres": "^3.4.9"
+    "postgres": "^3.4.9",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

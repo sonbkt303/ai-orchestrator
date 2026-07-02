@@ -125,6 +125,7 @@ export const HomepageDraftSchema = z.object({
   displayDoctorIds: z.array(z.string().uuid()).optional(),
   sections: SectionsSchema,
   seo: SeoSchema,
+  clinicProfile: ClinicProfileSchema.optional(),
   draftUpdatedAt: z.string().datetime(),
   publishedAt: z.string().datetime().nullable(),
 });

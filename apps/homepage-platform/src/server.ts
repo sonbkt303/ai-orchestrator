@@ -3,6 +3,7 @@ import cors from 'cors';
 import config from './config';
 import healthRoutes from './routes/health.routes';
 import publicRoutes from './routes/public.routes';
+import adminRoutes, { adminErrorHandler } from './routes/admin.routes';
 import { errorHandler } from './middleware/error-handler';
 
 const app = express();
@@ -12,6 +13,8 @@ app.use(express.json());
 
 app.use('/health', healthRoutes);
 app.use('/v1/public', publicRoutes);
+app.use('/v1/admin', adminRoutes);
+app.use('/v1/admin', adminErrorHandler);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Not found' });

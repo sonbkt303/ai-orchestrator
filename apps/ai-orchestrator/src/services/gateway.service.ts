@@ -3,9 +3,19 @@ import type { GatewayCompleteParams, GatewayStreamParams } from '../types';
 
 const DEFAULT_TIMEOUT_MS = config.ai.timeoutMs;
 
-export async function complete({ messages }: GatewayCompleteParams): Promise<string> {
+export async function complete({ messages, jsonMode = false }: GatewayCompleteParams): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+  const body: Record<string, unknown> = {
+    model: config.ai.model,
+    messages,
+    stream: false,
+  };
+
+  if (jsonMode) {
+    body.response_format = { type: 'json_object' };
+  }
 
   let res: Response;
   try {
@@ -15,11 +25,7 @@ export async function complete({ messages }: GatewayCompleteParams): Promise<str
         'Content-Type': 'application/json',
         Authorization: `Bearer ${config.ai.apiKey}`,
       },
-      body: JSON.stringify({
-        model: config.ai.model,
-        messages,
-        stream: false,
-      }),
+      body: JSON.stringify(body),
       signal: controller.signal,
     });
   } finally {

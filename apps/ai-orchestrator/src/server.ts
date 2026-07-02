@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import config from './config';
 import aiRoutes from './routes/ai.routes';
+import homepageRoutes from './routes/homepage.routes';
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/ai', aiRoutes);
+app.use('/ai/homepage', homepageRoutes);
 
 // ── Frontend (static) — only at /chat ───────────────────────────────────────
 const frontendDir = path.join(__dirname, '../src/frontend');

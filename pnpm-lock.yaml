@@ -29,6 +29,9 @@ importers:
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
     devDependencies:
       '@types/cors':
         specifier: ^2.8.17
@@ -66,6 +69,9 @@ importers:
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
     devDependencies:
       '@types/cors':
         specifier: ^2.8.17
@@ -88,6 +94,9 @@ importers:
       '@clever-dent/shared-contracts':
         specifier: workspace:*
         version: link:../../packages/shared-contracts
+      '@clever-dent/shared-utils':
+        specifier: workspace:*
+        version: link:../../packages/shared-utils
       next:
         specifier: ^15.3.4
         version: 15.5.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

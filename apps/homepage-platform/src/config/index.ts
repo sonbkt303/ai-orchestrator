@@ -22,7 +22,21 @@ const config = {
   },
   aiOrchestratorUrl: required('AI_ORCHESTRATOR_URL', 'http://localhost:4000'),
   publicSiteUrl: required('PUBLIC_SITE_URL', 'http://localhost:3000'),
+  publicBaseDomain: required('PUBLIC_BASE_DOMAIN', 'local.cleverdent.ai'),
+  publicSiteProtocol: required('PUBLIC_SITE_PROTOCOL', 'http'),
+  publicSitePort: process.env.PUBLIC_SITE_PORT
+    ? parseInt(process.env.PUBLIC_SITE_PORT, 10)
+    : undefined,
   revalidateSecret: required('REVALIDATE_SECRET', 'dev-secret'),
 };
+
+export function buildPublishedUrl(slug: string): string {
+  const { publicSiteProtocol, publicBaseDomain, publicSitePort, nodeEnv } = config;
+  const base = `${publicSiteProtocol}://${slug}.${publicBaseDomain}`;
+  if (nodeEnv === 'development' && publicSitePort) {
+    return `${base}:${publicSitePort}`;
+  }
+  return base;
+}
 
 export default config;
