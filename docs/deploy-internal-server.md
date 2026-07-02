@@ -6,7 +6,7 @@ Runbook đơn giản cho server nội bộ: **Docker Compose** chạy PostgreSQL
 |---|---|---|
 | PostgreSQL | Docker Compose | 5433 (LAN) |
 | Redis | Docker Compose | 6380 (localhost only) |
-| Node.js API | PM2 (`pnpm run start:pm2`) | 4000 (LAN) |
+| Node.js API | PM2 (`pnpm --filter ai-orchestrator start:pm2`) | 4000 (LAN) |
 
 ```mermaid
 flowchart LR
@@ -57,7 +57,7 @@ npm install -g pm2
 Kiểm tra:
 
 ```bash
-docker compose version
+docker compose -f infra/docker-compose.yml version
 node -v
 pnpm -v
 pm2 -v
@@ -117,22 +117,22 @@ AI_API_KEY=<your-api-key>
 ## 4. Khởi động infra
 
 ```bash
-docker compose up -d
-docker compose ps
+docker compose -f infra/docker-compose.yml up -d
+docker compose -f infra/docker-compose.yml ps
 ```
 
 Kiểm tra:
 
 ```bash
-docker compose exec postgres pg_isready -U postgres
-docker compose exec redis redis-cli ping
+docker compose -f infra/docker-compose.yml exec postgres pg_isready -U postgres
+docker compose -f infra/docker-compose.yml exec redis redis-cli ping
 # PONG
 ```
 
 Hoặc dùng script:
 
 ```bash
-pnpm run infra:up
+pnpm infra:up
 ```
 
 ---
@@ -141,8 +141,8 @@ pnpm run infra:up
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm run build
-pnpm run start:pm2
+pnpm --filter ai-orchestrator build
+pnpm --filter ai-orchestrator start:pm2
 ```
 
 App lắng nghe tại **http://0.0.0.0:4000**. PM2 tự restart khi crash.
@@ -159,10 +159,10 @@ curl http://127.0.0.1:4000/health
 
 | Hành động | Lệnh |
 |---|---|
-| Start | `pnpm run start:pm2` hoặc `pm2 start ecosystem.config.cjs` |
-| Stop | `pnpm run stop:pm2` hoặc `pm2 stop ai-orchestrator` |
-| Restart | `pnpm run restart:pm2` hoặc `pm2 restart ai-orchestrator` |
-| Logs | `pnpm run logs:pm2` hoặc `pm2 logs ai-orchestrator` |
+| Start | `pnpm --filter ai-orchestrator start:pm2` hoặc `pm2 start ecosystem.config.cjs` |
+| Stop | `pnpm --filter ai-orchestrator stop:pm2` hoặc `pm2 stop ai-orchestrator` |
+| Restart | `pnpm --filter ai-orchestrator restart:pm2` hoặc `pm2 restart ai-orchestrator` |
+| Logs | `pnpm --filter ai-orchestrator logs:pm2` hoặc `pm2 logs ai-orchestrator` |
 | Xóa khỏi PM2 | `pm2 delete ai-orchestrator` |
 
 ### Tự chạy lại sau reboot server (tuỳ chọn)
@@ -196,8 +196,8 @@ psql "postgresql://postgres:<password>@<SERVER_IP>:5433/ai_orchestrator" -c "SEL
 cd ai-orchestrator
 git pull --ff-only
 pnpm install --frozen-lockfile
-pnpm run build
-pnpm run restart:pm2
+pnpm --filter ai-orchestrator build
+pnpm --filter ai-orchestrator restart:pm2
 curl http://127.0.0.1:4000/health
 ```
 
@@ -208,25 +208,25 @@ curl http://127.0.0.1:4000/health
 ### Infra (Docker)
 
 ```bash
-docker compose ps
-docker compose logs -f postgres
-docker compose logs -f redis
-docker compose down          # dừng
-docker compose up -d         # bật lại
-pnpm run infra:down          # hoặc dùng script
-pnpm run infra:reset         # dừng + xóa volumes
+docker compose -f infra/docker-compose.yml ps
+docker compose -f infra/docker-compose.yml logs -f postgres
+docker compose -f infra/docker-compose.yml logs -f redis
+docker compose -f infra/docker-compose.yml down          # dừng
+docker compose -f infra/docker-compose.yml up -d         # bật lại
+pnpm infra:down          # hoặc dùng script
+pnpm infra:reset         # dừng + xóa volumes
 ```
 
 ### App (PM2)
 
 | Hành động | Lệnh |
 |---|---|
-| Start | `pnpm run start:pm2` |
-| Restart | `pnpm run restart:pm2` |
-| Stop | `pnpm run stop:pm2` |
-| Logs | `pnpm run logs:pm2` |
-| Dev local (hot reload) | `pnpm run dev` |
-| Build | `pnpm run build` |
+| Start | `pnpm --filter ai-orchestrator start:pm2` |
+| Restart | `pnpm --filter ai-orchestrator restart:pm2` |
+| Stop | `pnpm --filter ai-orchestrator stop:pm2` |
+| Logs | `pnpm --filter ai-orchestrator logs:pm2` |
+| Dev local (hot reload) | `pnpm --filter ai-orchestrator dev` |
+| Build | `pnpm --filter ai-orchestrator build` |
 
 ---
 
@@ -236,15 +236,15 @@ pnpm run infra:reset         # dừng + xóa volumes
 |---|---|
 | `pnpm: command not found` | `source ~/.bashrc`, kiểm tra `nvm use 22` |
 | `pm2: command not found` | `npm install -g pm2` (cùng Node version với nvm) |
-| PM2 start fail | Chưa build | `pnpm run build` rồi `pnpm run start:pm2` |
+| PM2 start fail | Chưa build | `pnpm --filter ai-orchestrator build` rồi `pnpm --filter ai-orchestrator start:pm2` |
 | `permission denied` khi docker | Logout/login sau `usermod -aG docker` |
-| App không kết nối DB | Kiểm tra `docker compose ps`, `.env` POSTGRES_* |
+| App không kết nối DB | Kiểm tra `docker compose -f infra/docker-compose.yml ps`, `.env` POSTGRES_* |
 | Redis error | `.env`: `REDIS_HOST=localhost`, `REDIS_PORT=6380` |
 | LAN không vào :4000 / :5433 | Kiểm tra firewall server, mở port nếu cần |
 
 ```bash
-docker compose ps
-docker compose logs postgres --tail 30
+docker compose -f infra/docker-compose.yml ps
+docker compose -f infra/docker-compose.yml logs postgres --tail 30
 ss -tlnp | grep -E '4000|5433|6380'
 ```
 

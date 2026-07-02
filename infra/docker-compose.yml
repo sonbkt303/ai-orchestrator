@@ -55,9 +55,31 @@ services:
       timeout: 5s
       retries: 3
 
+  # ── PostgreSQL (Homepage Platform) ────────────────────────────────────────
+  postgres-hp:
+    image: postgres:16-alpine
+    container_name: homepage-platform-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB_HP:-homepage_platform}
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_hp_data:/var/lib/postgresql/data
+    networks:
+      - ai-orchestrator-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
 volumes:
   redis_data:
   postgres_data:
+  postgres_hp_data:
 
 networks:
   ai-orchestrator-net:

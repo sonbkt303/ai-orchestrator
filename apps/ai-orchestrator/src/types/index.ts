@@ -1,3 +1,5 @@
+export type { PublishedSnapshot } from '@clever-dent/shared-contracts';
+
 export type MessageRole = 'system' | 'user' | 'assistant';
 
 export type AiRequestStatus = 'success' | 'timeout' | 'error';

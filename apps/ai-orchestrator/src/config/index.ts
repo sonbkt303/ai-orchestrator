@@ -2,7 +2,7 @@ import 'dotenv/config';
 import type { AppConfig } from '../types';
 
 const config: AppConfig = {
-  port: parseInt(process.env.PORT ?? '3000', 10),
+  port: parseInt(process.env.PORT ?? '4000', 10),
   nodeEnv: process.env.NODE_ENV ?? 'development',
 
   ai: {

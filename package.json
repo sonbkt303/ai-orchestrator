@@ -1,35 +1,23 @@
 {
-  "name": "ai-orchestrator",
-  "version": "1.0.0",
-  "description": "AI Integration PoC Architecture",
-  "main": "dist/server.js",
+  "name": "clever-dent-monorepo",
+  "private": true,
+  "description": "Clever Dent AI monorepo — ai-orchestrator, homepage-platform, public-site",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "start:pm2": "pm2 start ecosystem.config.cjs",
-    "stop:pm2": "pm2 stop ai-orchestrator",
-    "restart:pm2": "pm2 restart ai-orchestrator",
-    "logs:pm2": "pm2 logs ai-orchestrator",
-    "dev": "tsx watch src/server.ts",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "infra:up": "docker compose up -d",
-    "infra:down": "docker compose down",
-    "infra:reset": "docker compose down -v"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "postgres": "^3.4.9"
+    "dev": "turbo dev",
+    "dev:all": "turbo dev --parallel",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "infra:reset": "docker compose -f infra/docker-compose.yml down -v",
+    "db:migrate:ai": "pnpm --filter ai-orchestrator db:migrate",
+    "db:migrate:hp": "pnpm --filter homepage-platform db:migrate"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.2",
-    "@types/node": "^22.15.21",
-    "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "turbo": "^2.5.4"
+  },
+  "packageManager": "pnpm@10.23.0",
+  "engines": {
+    "node": ">=18"
   }
 }

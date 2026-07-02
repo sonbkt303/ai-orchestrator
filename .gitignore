@@ -3,6 +3,13 @@ node_modules/
 
 # Environment
 .env
+apps/*/.env
+
+# Build outputs
+dist/
+apps/*/dist/
+packages/*/dist/
+apps/public-site/.next/
 
 # Logs
 logs/
@@ -19,4 +26,3 @@ Thumbs.db
 
 # Requirements analysis (local/confidential)
 requirements-analysis/
-dist/
